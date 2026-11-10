@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
+    <h1 class="text-3xl font-bold text-red-600">Admin Control Panel</h1>
+    <p class="text-slate-600">This area is strictly restricted to administrator accounts.</p>
+    <div class="p-4 bg-slate-100 rounded border border-slate-300">
+        <h3 class="font-semibold text-slate-800">System Status</h3>
+        <p class="text-sm text-slate-600">Database Connection: Connected to Supabase PostgreSQL</p>
+    </div>
+</div>
+{% endblock %}
