@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurseon - AI nursing reviewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+    <nav class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="{% url 'dashboard:home' %}" class="text-xl font-bold tracking-wide">Nurseon</a>
+            <div class="space-x-4 flex items-center">
+                {% if user.is_authenticated %}
+                <span class="text-sm bg-blue-700 px-3 py-1 rounded-full">{{ user.username }} ({{ user.role }})</span>
+                <a href="{% url 'dashboard:home' %}" class="hover:underline text-sm">Dashboard</a>
+                <a href="{% url 'profile' %}" class="hover:underline text-sm">Profile</a>
+                {% if user.is_admin_role %}
+                <a href="{% url 'dashboard:admin_panel' %}"
+                    class="hover:underline text-sm font-semibold text-yellow-300">Admin Panel</a>
+                {% endif %}
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded transition">Logout</button>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}" class="hover:underline text-sm">Login</a>
+                <a href="{% url 'signup' %}"
+                    class="bg-white text-blue-600 px-3 py-1.5 rounded font-medium text-sm hover:bg-blue-50 transition">Sign
+                    Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4 w-full">
+        {% for message in messages %}
+        <div
+            class="p-4 rounded text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-300{% else %}bg-green-100 text-green-700 border border-green-300{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-slate-200 text-center py-4 text-xs text-slate-600">
+        &copy; 2026 Nurseon Board Exam Review Platform. All rights reserved.
+    </footer>
+</body>
+
+</html>
