@@ -4,7 +4,7 @@ from .models import CustomUser
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ['username', 'email', 'role', 'is_staff']
+    list_display = ['username', 'email', 'role', 'is_student']
     fieldsets = UserAdmin.fieldsets + (
         ('Nurseon Profile', {'fields': ('role', 'specialization')}),
     )
