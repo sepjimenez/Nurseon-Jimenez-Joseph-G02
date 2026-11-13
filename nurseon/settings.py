@@ -12,9 +12,6 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from django.contrib import admin
-from django.urls import path, include
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,11 +28,6 @@ SECRET_KEY =os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('accounts.urls')),
-]
 
 # Application definition
 
@@ -144,3 +136,7 @@ MAILERS = {
 
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+LOGIN_REDIRECT_URL = 'dashboard:home'
+LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = 'login'
