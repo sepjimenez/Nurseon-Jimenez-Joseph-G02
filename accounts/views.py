@@ -12,7 +12,7 @@ class SignUpView(CreateView):
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = CustomUser
     form_class = CustomUserChangeForm
-    template_name = 'accounts/profile.html'
+    template_name = 'registration/profile.html'
     success_url = reverse_lazy('dashboard:home')
 
     def get_object(self):

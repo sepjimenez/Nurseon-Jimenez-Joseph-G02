@@ -4,11 +4,9 @@
 <div class="space-y-6">
     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
         <h1 class="text-3xl font-bold text-slate-800">Welcome, {{ user.username }}!</h1>
-        <p class="text-slate-600 mt-1">Role: <span class="font-semibold text-blue-600">{{ user.get_role_display
-                }}</span></p>
+        <p class="text-slate-600 mt-1">Role: <span class="font-semibold text-blue-600">{{ user.get_role_display }}</span></p>
         {% if user.specialization %}
-        <p class="text-slate-600">Specialization: <span class="font-semibold text-slate-700">{{ user.specialization
-                }}</span></p>
+        <p class="text-slate-600">Specialization: <span class="font-semibold text-slate-700">{{ user.specialization }}</span></p>
         {% endif %}
     </div>
 
