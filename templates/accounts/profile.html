@@ -1,0 +1,182 @@
+{% extends "app_base.html" %}
+{% load static %}
+{% block title %}My Profile – Nurseon{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-900">My Profile</h1>
+        <p class="text-slate-500 text-sm mt-1">Your details and the icon that represents your specialization.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- ═══════ LEFT COLUMN: Profile Summary ═══════ -->
+        <div class="lg:col-span-4 text-center pt-12">
+            <!-- Avatar with Icon -->
+            <div class="inline-block">
+                <div id="summary-avatar" class="w-28 h-28 rounded-full bg-white border-4 border-white shadow-md mx-auto flex items-center justify-center text-nurseon">
+                    {% include "partials/spec_icon.html" with class="w-12 h-12 text-nurseon" %}
+                </div>
+            </div>
+
+            <div class="px-6 pt-4">
+                <h2 class="text-xl font-bold text-slate-800">{{ user.username }}</h2>
+                <p id="summary-spec" data-role="{{ user.get_role_display }}" class="text-xs text-slate-500 mt-1 font-medium">
+                    {{ user.get_role_display }}{% if user.specialization %} · {{ user.specialization }}{% endif %}
+                </p>
+
+                <div class="mt-4">
+                    <span class="inline-block bg-nurseon-mint text-nurseon-dark text-xs font-semibold px-4 py-1.5 rounded-full border border-nurseon-light">
+                        72% board readiness
+                    </span>
+                </div>
+
+                <!-- Stat Counters -->
+                <div class="mt-8 pt-5 border-t border-slate-100 grid grid-cols-3 divide-x divide-slate-100">
+                    <div>
+                        <p class="text-xl font-bold text-slate-800">18</p>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">quizzes</p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-slate-800">6</p>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">day streak</p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-slate-800">4</p>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">modules</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ RIGHT COLUMN: Edit Form Card ═══════ -->
+        <div class="lg:col-span-8 bg-white rounded-3xl shadow-sm border border-slate-200 p-8 sm:p-10">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Information Section -->
+                <h2 class="text-lg font-bold text-slate-900 mb-5">Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                    <!-- Username -->
+                    <div>
+                        <label for="id_username" class="block text-xs font-semibold text-slate-600 mb-1.5">Username</label>
+                        <input type="text" name="username" id="id_username"
+                               value="{{ form.username.value|default:user.username }}"
+                               class="w-full border {% if form.username.errors %}border-red-400{% else %}border-slate-200{% endif %} rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nurseon/40 focus:border-nurseon transition">
+                        {% if form.username.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="id_email" class="block text-xs font-semibold text-slate-600 mb-1.5">Email</label>
+                        <input type="email" name="email" id="id_email"
+                               value="{{ form.email.value|default:user.email }}"
+                               class="w-full border {% if form.email.errors %}border-red-400{% else %}border-slate-200{% endif %} rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nurseon/40 focus:border-nurseon transition">
+                        {% if form.email.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- First name -->
+                    <div>
+                        <label for="id_first_name" class="block text-xs font-semibold text-slate-600 mb-1.5">First name</label>
+                        <input type="text" name="first_name" id="id_first_name"
+                               value="{{ form.first_name.value|default:user.first_name|default:'' }}"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nurseon/40 focus:border-nurseon transition">
+                    </div>
+
+                    <!-- Specialization -->
+                    <div>
+                        <label for="id_specialization" class="block text-xs font-semibold text-slate-600 mb-1.5">Specialization</label>
+                        <input type="text" name="specialization" id="id_specialization"
+                               value="{{ form.specialization.value|default:user.specialization|default:'Pediatrics' }}"
+                               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-nurseon/40 focus:border-nurseon transition">
+                    </div>
+                </div>
+
+                <!-- Profile Icon Section -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-slate-900 mb-1">Profile icon</h2>
+                    <p class="text-xs text-slate-500 mb-4">Pick the icon that matches your field. It shows on your avatar and the sidebar.</p>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">AVAILABLE SPECIALIZATIONS</p>
+
+                    <!-- Icon Selection Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                        <!-- 1. Pediatrics -->
+                        <button type="button" onclick="selectIcon('Pediatrics', 'pediatrics', this)"
+                                class="spec-card h-28 flex flex-col items-center justify-center gap-2 p-2 rounded-2xl border-2 transition text-center hover:border-nurseon/60 focus:outline-none {% if user.icon_type == 'pediatrics' %}border-nurseon bg-nurseon-mint shadow-sm text-nurseon-dark{% else %}border-slate-200 text-slate-600 bg-white{% endif %}"
+                                data-spec="Pediatrics">
+                            <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-baby"><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M15 12h.01"/><path d="M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/><path d="M9 12h.01"/></svg>
+                            </div>
+                            <span class="h-10 flex items-center justify-center text-xs font-semibold">Pediatrics</span>
+                        </button>
+
+                        <!-- 2. Med-Tech -->
+                        <button type="button" onclick="selectIcon('Med-Tech', 'med-tech', this)"
+                                class="spec-card h-28 flex flex-col items-center justify-center gap-2 p-2 rounded-2xl border-2 transition text-center hover:border-nurseon/60 focus:outline-none {% if user.icon_type == 'med-tech' %}border-nurseon bg-nurseon-mint shadow-sm text-nurseon-dark{% else %}border-slate-200 text-slate-600 bg-white{% endif %}"
+                                data-spec="Med-Tech">
+                            <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>
+                            </div>
+                            <span class="h-10 flex items-center justify-center text-xs font-semibold">Med-Tech</span>
+                        </button>
+
+                        <!-- 3. Pharma -->
+                        <button type="button" onclick="selectIcon('Pharma', 'pharma', this)"
+                                class="spec-card h-28 flex flex-col items-center justify-center gap-2 p-2 rounded-2xl border-2 transition text-center hover:border-nurseon/60 focus:outline-none {% if user.icon_type == 'pharma' %}border-nurseon bg-nurseon-mint shadow-sm text-nurseon-dark{% else %}border-slate-200 text-slate-600 bg-white{% endif %}"
+                                data-spec="Pharma">
+                            <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pill"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+                            </div>
+                            <span class="h-10 flex items-center justify-center text-xs font-semibold">Pharma</span>
+                        </button>
+
+                        <!-- 4. Med-Surg -->
+                        <button type="button" onclick="selectIcon('Med-Surg', 'med-surg', this)"
+                                class="spec-card h-28 flex flex-col items-center justify-center gap-2 p-2 rounded-2xl border-2 transition text-center hover:border-nurseon/60 focus:outline-none {% if user.icon_type == 'med-surg' %}border-nurseon bg-nurseon-mint shadow-sm text-nurseon-dark{% else %}border-slate-200 text-slate-600 bg-white{% endif %}"
+                                data-spec="Med-Surg">
+                            <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>
+                            </div>
+                            <span class="h-10 flex items-center justify-center text-xs font-semibold">Med-Surg</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-4 pt-4 border-t border-slate-100">
+                    <button type="submit"
+                            class="bg-nurseon-darker hover:bg-nurseon-dark text-white font-semibold px-7 py-2.5 rounded-xl transition duration-200 text-sm shadow-sm">
+                        Save changes
+                    </button>
+                    <a href="{% if user.is_admin_role %}{% url 'dashboard:admin_panel' %}{% else %}{% url 'dashboard:home' %}{% endif %}"
+                       class="text-slate-500 hover:text-slate-800 font-semibold px-4 py-2.5 text-sm transition">
+                        Cancel
+                    </a>
+                </div>
+
+                <!-- Pop-up message centered below Save changes and Cancel button -->
+                {% if messages %}
+                <div class="mt-4 pt-2 text-center">
+                    {% for message in messages %}
+                    <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-500{% else %}text-nurseon{% endif %}">
+                        {{ message }}
+                    </p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/profile.js' %}"></script>
+{% endblock extra_js %}

@@ -1,0 +1,24 @@
+{% extends "app_base.html" %}
+{% block title %}Delete User – Nurseon{% endblock %}
+
+{% block content %}
+<div class="max-w-xl bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+    <h1 class="text-2xl font-bold text-slate-800">Delete user account?</h1>
+    <p class="text-slate-600 mt-3 text-sm">
+        This permanently deletes the account for
+        <strong>{{ object.get_full_name|default:object.username }}</strong> ({{ object.get_role_display }}).
+        This action cannot be undone.
+    </p>
+    <form method="post" class="flex items-center gap-3 mt-8">
+        {% csrf_token %}
+        <button type="submit"
+            class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2.5 rounded-xl transition text-sm shadow-sm">
+            Delete account
+        </button>
+        <a href="{% url 'dashboard:admin_panel' %}"
+            class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}
