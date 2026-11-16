@@ -1,3 +1,11 @@
+from django.urls import path
+
+from . import views
+
 app_name = "documents"
 
-urlpatterns = []
+urlpatterns = [
+    path("", views.DocumentListView.as_view(), name="list"),
+    path("<int:pk>/", views.DocumentDetailView.as_view(), name="detail"),
+    path("<int:pk>/bookmark/", views.DocumentBookmarkView.as_view(), name="bookmark"),
+]
