@@ -1,6 +1,7 @@
 import re
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -169,3 +170,15 @@ class DocumentSource(models.Model):
 
     def __str__(self):
         return f"{self.document.doc_id} Source #{self.order}"
+
+
+def visible_documents_for(user):
+    documents = NursingDocument.objects.select_related(
+        "category", "created_by"
+    ).prefetch_related("tags")
+    if user.is_admin_role():
+        return documents
+    return documents.filter(
+        Q(created_by=user)
+        | Q(created_by__role="ADMIN", is_published=True)
+    ).distinct()
