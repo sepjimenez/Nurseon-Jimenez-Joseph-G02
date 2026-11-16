@@ -1,0 +1,63 @@
+{% extends "app_base.html" %}
+{% block title %}{{ document.title }} – Nurseon{% endblock %}
+
+{% block content %}
+<article class="mx-auto max-w-4xl space-y-6">
+    <a href="{% url 'documents:list' %}" class="text-sm font-semibold text-nurseon-dark hover:underline">
+        &larr; Back to documents
+    </a>
+
+    <header class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+        {% if document.category %}
+        <p class="text-xs font-semibold uppercase tracking-wide text-nurseon">{{ document.category.name }}</p>
+        {% endif %}
+        <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+            <h1 class="text-3xl font-bold text-slate-800">{{ document.title }}</h1>
+            <form method="post" action="{% url 'documents:bookmark' document.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                    class="rounded-xl border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50">
+                    {% if is_bookmarked %}Remove bookmark{% else %}Bookmark{% endif %}
+                </button>
+            </form>
+        </div>
+        <p class="mt-4 leading-7 text-slate-600">{{ document.description }}</p>
+        <div class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
+            <span>{{ document.read_time }}</span>
+            <time datetime="{{ document.publish_date|date:'Y-m-d' }}">Published {{ document.publish_date|date:"M j, Y" }}</time>
+        </div>
+        {% if document.tags.all %}
+        <ul class="mt-4 flex flex-wrap gap-2" aria-label="Document tags">
+            {% for tag in document.tags.all %}
+            <li class="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">{{ tag.name }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </header>
+
+    <div class="space-y-4">
+        {% for section in document.content_sections.all %}
+        {% if section.section_type == "heading" %}
+        <h2 class="pt-3 text-xl font-bold text-slate-800">{{ section.text }}</h2>
+        {% elif section.section_type == "callout" %}
+        <aside class="rounded-xl border-l-4 border-teal-600 bg-teal-50 p-4 leading-7 text-teal-950">{{ section.text }}</aside>
+        {% else %}
+        <p class="leading-7 text-slate-700">{{ section.text }}</p>
+        {% endif %}
+        {% empty %}
+        <p class="rounded-xl bg-white p-5 text-sm text-slate-500">This document has no additional sections.</p>
+        {% endfor %}
+    </div>
+
+    {% if document.sources.all %}
+    <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 class="text-lg font-bold text-slate-800">Sources</h2>
+        <ol class="mt-3 list-inside list-decimal space-y-2 text-sm leading-6 text-slate-600">
+            {% for source in document.sources.all %}
+            <li>{{ source.text }}</li>
+            {% endfor %}
+        </ol>
+    </section>
+    {% endif %}
+</article>
+{% endblock content %}
