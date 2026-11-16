@@ -33,15 +33,15 @@ Nurseon is an AI nursing review website that has been developed with the intenti
 
 ## Features
 
-The following ten features define the complete product scope. Account, profile, and role-based administration foundations are present; the learning modules and result tracking are planned work.
+The following ten features define the complete product scope. Account and role-based administration foundations, along with the nursing document library, are present; most other learning modules and result tracking are planned work.
 
 ### 1. AI Nurse Tutor — Planned
 
 Let students ask nursing-related questions and receive AI-generated explanations and study guidance.
 
-### 2. Nursing Documents — Planned
+### 2. Nursing Documents — Implemented
 
-Provide a searchable library of nursing study materials and references, organized by topic and difficulty.
+Browse and search published nursing study materials, filter by category, read document sections and sources, and bookmark useful references.
 
 ### 3. Interactive Quizzes — Planned
 
@@ -170,6 +170,10 @@ python manage.py setup_admin
 
 > **Warning:** The current automatic synchronization and setup command can delete other administrator-role accounts. Review `accounts/admin_setup.py` before using this with shared or production data, and keep a database backup.
 
+Administrators can create nursing documents, categories, tags, sections, and sources in `/admin/`. Publish a document there for it to appear in the student dashboard and library.
+
+On a new database, create or synchronize an administrator first, then run `python manage.py seed_documents` to add the initial nursing ethics document. The seed command is safe to rerun.
+
 ## Routes
 
 | URL | Access | Description |
@@ -181,6 +185,8 @@ python manage.py setup_admin
 | `/accounts/profile/` | Authenticated | View and update profile |
 | `/dashboard/` | Authenticated | Student dashboard; administrators are redirected |
 | `/dashboard/admin-panel/` | Administrator | Manage user accounts |
+| `/documents/` | Authenticated | Search and browse nursing documents |
+| `/documents/<id>/` | Authenticated | Read a document and manage its bookmark |
 | `/admin/` | Django staff | Django administration site |
 
 ## Testing
@@ -206,6 +212,7 @@ Use an isolated test database rather than a production database. Some existing t
 .
 ├── accounts/       # Custom user, authentication, profiles, and admin tools
 ├── dashboard/      # Student and administrator dashboard views
+├── documents/      # Nursing document library, categories, and bookmarks
 ├── nurseon/        # Django settings and project URL configuration
 ├── static/         # Logo and JavaScript assets
 ├── templates/      # Shared layouts and application pages
@@ -218,7 +225,7 @@ Use an isolated test database rather than a production database. Some existing t
 - [x] User registration, authentication, and profile management
 - [x] Role-based dashboard shell and administrator account tools
 - [ ] AI Nurse Tutor
-- [ ] Searchable Nursing Documents library
+- [x] Searchable Nursing Documents library with reading pages and bookmarks
 - [ ] Interactive topic quizzes with recorded scores
 - [ ] Scored clinical Case Studies
 - [ ] Timed Mock Board Examination with score breakdown

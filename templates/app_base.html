@@ -16,11 +16,11 @@
                 </a>
             </div>
 
-            <!-- Simple Navigation: Dashboard & Profile -->
+            <!-- Main Navigation -->
             <nav class="space-y-1.5">
                 <!-- Dashboard Nav -->
                 <a href="{% if user.is_admin_role %}{% url 'dashboard:admin_panel' %}{% else %}{% url 'dashboard:home' %}{% endif %}"
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition {% if 'profile' not in request.path %}bg-white/15 text-white font-semibold shadow-inner{% else %}text-nurseon-mint hover:bg-white/10 hover:text-white{% endif %}">
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition {% if 'profile' not in request.path and 'documents' not in request.path %}bg-white/15 text-white font-semibold shadow-inner{% else %}text-nurseon-mint hover:bg-white/10 hover:text-white{% endif %}">
                     <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect width="7" height="7" x="3" y="3" rx="1" />
@@ -29,6 +29,16 @@
                         <rect width="7" height="7" x="3" y="14" rx="1" />
                     </svg>
                     <span>Dashboard</span>
+                </a>
+
+                <a href="{% url 'documents:list' %}"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition {% if 'documents' in request.path %}bg-white/15 text-white font-semibold shadow-inner{% else %}text-nurseon-mint hover:bg-white/10 hover:text-white{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+                    </svg>
+                    <span>Documents</span>
                 </a>
 
                 <!-- Profile Nav -->
