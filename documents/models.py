@@ -1,6 +1,6 @@
 import re
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
@@ -90,16 +90,25 @@ class NursingDocument(models.Model):
         return f"{self.doc_id or self.pk}: {self.title}"
 
     def save(self, *args, **kwargs):
-        if not self.doc_id:
-            # Generate next doc_XX
-            last = NursingDocument.objects.filter(doc_id__startswith="doc_").order_by("-id").first()
-            if last and last.doc_id:
-                match = re.search(r"doc_(\d+)", last.doc_id)
-                next_num = int(match.group(1)) + 1 if match else 1
-            else:
-                next_num = 1
-            self.doc_id = f"doc_{next_num:02d}"
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if not self.doc_id:
+                last = (
+                    NursingDocument.objects.filter(doc_id__startswith="doc_")
+                    .order_by("-id")
+                    .first()
+                )
+                if last and last.doc_id:
+                    match = re.search(r"doc_(\d+)", last.doc_id)
+                    next_num = int(match.group(1)) + 1 if match else 1
+                else:
+                    next_num = 1
+
+                candidate = f"doc_{next_num:02d}"
+                while NursingDocument.objects.filter(doc_id=candidate).exists():
+                    next_num += 1
+                    candidate = f"doc_{next_num:02d}"
+                self.doc_id = candidate
+            super().save(*args, **kwargs)
 
     def can_view(self, user):
         """
