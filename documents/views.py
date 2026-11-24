@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
@@ -91,11 +92,12 @@ class DocumentBookmarkView(LoginRequiredMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
-        document = get_object_or_404(visible_documents_for(request.user), pk=pk)
-        if document.bookmarks.filter(pk=request.user.pk).exists():
-            document.bookmarks.remove(request.user)
-            messages.info(request, f'Removed "{document.title}" from your bookmarks.')
-        else:
-            document.bookmarks.add(request.user)
-            messages.success(request, f'Bookmarked "{document.title}".')
+        with transaction.atomic():
+            document = get_object_or_404(visible_documents_for(request.user), pk=pk)
+            if document.bookmarks.filter(pk=request.user.pk).exists():
+                document.bookmarks.remove(request.user)
+                messages.info(request, f'Removed "{document.title}" from your bookmarks.')
+            else:
+                document.bookmarks.add(request.user)
+                messages.success(request, f'Bookmarked "{document.title}".')
         return redirect("documents:detail", pk=document.pk)
