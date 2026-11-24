@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib.messages.views import SuccessMessageMixin
@@ -105,22 +106,24 @@ class AdminUserPasswordView(AdminRoleRequiredMixin, View):
 
 
 class AdminToggleUserRoleView(AdminRoleRequiredMixin, View):
-    def post(self, request, user_id):
-        target_user = get_object_or_404(CustomUser, pk=user_id)
-        if target_user.role == CustomUser.Role.STUDENT:
-            target_user.role = CustomUser.Role.ADMIN
-            target_user.save()
-            messages.success(request, f"User '{target_user.username}' was promoted to Administrator.")
-        else:
-            can_demote, reason = target_user.can_be_demoted_by(request.user)
-            if not can_demote:
-                messages.error(request, reason)
-            else:
-                target_user.role = CustomUser.Role.STUDENT
-                target_user.save()
-                messages.success(request, f"User '{target_user.username}' was changed to Student.")
-        return redirect('dashboard:admin_panel')
+    http_method_names = ["post"]
 
+    def post(self, request, user_id):
+        with transaction.atomic():
+            target_user = get_object_or_404(CustomUser, pk=user_id)
+            if target_user.role == CustomUser.Role.STUDENT:
+                target_user.role = CustomUser.Role.ADMIN
+                target_user.save(update_fields=["role"])
+                messages.success(request, f"User '{target_user.username}' was promoted to Administrator.")
+            else:
+                can_demote, reason = target_user.can_be_demoted_by(request.user)
+                if not can_demote:
+                    messages.error(request, reason)
+                else:
+                    target_user.role = CustomUser.Role.STUDENT
+                    target_user.save(update_fields=["role"])
+                    messages.success(request, f"User '{target_user.username}' was changed to Student.")
+        return redirect('dashboard:admin_panel')
 
 class AdminUserDeleteView(AdminRoleRequiredMixin, DeleteView):
     model = CustomUser
@@ -137,16 +140,13 @@ class AdminUserDeleteView(AdminRoleRequiredMixin, DeleteView):
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
-        target = self.get_object()
-        can_delete, reason = target.can_be_deleted_by(self.request.user)
-        if not can_delete:
-            messages.error(self.request, reason)
-            return redirect('dashboard:admin_panel')
-        username = target.username
-        response = super().form_valid(form)
-        messages.success(self.request, f"User account '{username}' was deleted.")
-        return response
-
-
-class AdminStudentDeleteView(AdminUserDeleteView):
-    pk_url_kwarg = 'student_id'
+        with transaction.atomic():
+            target = self.get_object()
+            can_delete, reason = target.can_be_deleted_by(self.request.user)
+            if not can_delete:
+                messages.error(self.request, reason)
+                return redirect('dashboard:admin_panel')
+            username = target.username
+            response = super().form_valid(form)
+            messages.success(self.request, f"User account '{username}' was deleted.")
+            return response

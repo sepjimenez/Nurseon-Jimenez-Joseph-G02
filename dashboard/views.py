@@ -26,5 +26,7 @@ class AdminPanelView(AdminRoleRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users'] = CustomUser.objects.all().order_by('role', 'username')
+        context['users'] = CustomUser.objects.only(
+            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'specialization', 'is_active'
+        ).order_by('role', 'username')
         return context
