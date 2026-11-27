@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from accounts.models import CustomUser
 from accounts.views import AdminRoleRequiredMixin
 from documents.models import visible_documents_for
@@ -21,12 +21,10 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class AdminPanelView(AdminRoleRequiredMixin, TemplateView):
+class AdminPanelView(AdminRoleRequiredMixin, ListView):
+    model = CustomUser
     template_name = 'dashboard/admin_panel.html'
+    context_object_name = 'users'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['users'] = CustomUser.objects.only(
-            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'specialization', 'is_active'
-        ).order_by('role', 'username')
-        return context
+    def get_queryset(self):
+        return CustomUser.objects.filter(role=CustomUser.Role.STUDENT)
