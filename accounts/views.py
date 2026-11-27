@@ -64,6 +64,10 @@ class AdminUserUpdateView(AdminRoleRequiredMixin, SuccessMessageMixin, UpdateVie
     success_url = reverse_lazy('dashboard:admin_panel')
     success_message = "User profile details updated successfully."
 
+    def get_queryset(self):
+        # ONLY allow targeting Students, not Admins
+        return CustomUser.objects.filter(role=CustomUser.Role.STUDENT)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['requesting_user'] = self.request.user
@@ -125,11 +129,16 @@ class AdminToggleUserRoleView(AdminRoleRequiredMixin, View):
                     messages.success(request, f"User '{target_user.username}' was changed to Student.")
         return redirect('dashboard:admin_panel')
 
+
 class AdminUserDeleteView(AdminRoleRequiredMixin, DeleteView):
     model = CustomUser
     template_name = 'dashboard/student_confirm_delete.html'
     pk_url_kwarg = 'user_id'
     success_url = reverse_lazy('dashboard:admin_panel')
+
+    def get_queryset(self):
+        # ONLY allow targeting Students, not Admins
+        return CustomUser.objects.filter(role=CustomUser.Role.STUDENT)
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -148,5 +157,9 @@ class AdminUserDeleteView(AdminRoleRequiredMixin, DeleteView):
                 return redirect('dashboard:admin_panel')
             username = target.username
             response = super().form_valid(form)
-            messages.success(self.request, f"User account '{username}' was deleted.")
+            messages.success(self.request, f"User account '{username}' was deleted successfully.")
             return response
+
+
+class AdminStudentDeleteView(AdminUserDeleteView):
+    pk_url_kwarg = 'user_id'
