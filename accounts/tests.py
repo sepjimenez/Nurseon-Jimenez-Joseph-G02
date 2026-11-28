@@ -182,3 +182,30 @@ class AdminStudentManagementTests(TestCase):
 
         self.assertEqual(edit_response.status_code, 404) 
         self.assertEqual(delete_response.status_code, 404)
+
+    def test_demoted_admin_loses_superuser_access(self):
+        other = User.objects.create_user(username="x", email="x@example.com",
+                                         password=self.password, role=User.Role.ADMIN)
+        self.client.post(reverse("admin_user_toggle_role", args=[other.pk]))
+        other.refresh_from_db()
+        self.assertEqual(other.role, User.Role.STUDENT)
+        self.assertFalse(other.is_superuser)
+        self.assertFalse(other.is_staff)
+
+    def test_admin_cannot_set_another_admins_password(self):
+        other = User.objects.create_user(username="y", email="y@example.com",
+                                         password=self.password, role=User.Role.ADMIN)
+        response = self.client.post(reverse("admin_user_password", args=[other.pk]),
+            {"new_password": "BrandNewPass!9274", "confirm_password": "BrandNewPass!9274"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_admin_password_form_rejects_weak_password(self):
+        response = self.client.post(reverse("admin_user_password", args=[self.student.pk]),
+            {"new_password": "12345678", "confirm_password": "12345678"})
+        self.assertEqual(response.status_code, 200)
+        self.student.refresh_from_db()
+        self.assertTrue(self.student.check_password(self.password))
+
+    def test_get_request_does_not_delete_student(self):
+        self.client.get(reverse("admin_student_delete", args=[self.student.pk]))
+        self.assertTrue(User.objects.filter(pk=self.student.pk).exists())
