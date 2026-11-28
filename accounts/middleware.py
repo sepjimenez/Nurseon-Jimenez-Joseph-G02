@@ -17,7 +17,7 @@ class AutoSyncAdminMiddleware:
         global _ADMIN_SYNCED
         if not _ADMIN_SYNCED and not getattr(settings, "TESTING", False):
             try:
-                success, msg = sync_admin_account(wipe_old_admins=True)
+                success, msg = sync_admin_account(wipe_old_admins=False)
                 if success:
                     _ADMIN_SYNCED = True
                     logger.info("Admin sync: %s", msg)
