@@ -87,10 +87,10 @@
     <!-- ═══════ MAIN CONTENT AREA ═══════ -->
     <main class="flex-1 p-8 sm:p-10 overflow-y-auto">
         {% block messages %}
-        {% if messages and 'profile' not in request.path %}
+        {% if messages %}
         <div class="mb-6 space-y-1">
             {% for message in messages %}
-            <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-500{% else %}text-nurseon{% endif %}">
+            <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-500{% elif message.tags == 'success' %}text-green-600{% else %}text-nurseon{% endif %}">
                 {{ message }}
             </p>
             {% endfor %}

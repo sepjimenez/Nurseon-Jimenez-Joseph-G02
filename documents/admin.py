@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.db import transaction
 
+from .forms import NursingDocumentAdminForm
 from .models import Category, DocumentSection, DocumentSource, NursingDocument, Tag
 
 
@@ -15,6 +17,7 @@ class DocumentSourceInline(admin.TabularInline):
 
 @admin.register(NursingDocument)
 class NursingDocumentAdmin(admin.ModelAdmin):
+    form = NursingDocumentAdminForm
     list_display = ("title", "category", "is_published", "publish_date", "created_by")
     list_filter = ("is_published", "category", "publish_date")
     search_fields = ("title", "description", "doc_id")
@@ -23,9 +26,10 @@ class NursingDocumentAdmin(admin.ModelAdmin):
     inlines = (DocumentSectionInline, DocumentSourceInline)
 
     def save_model(self, request, obj, form, change):
-        if not change:
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+        with transaction.atomic():
+            if not change:
+                obj.created_by = request.user
+            super().save_model(request, obj, form, change)
 
 
 admin.site.register(Category)

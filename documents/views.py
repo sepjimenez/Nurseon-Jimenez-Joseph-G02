@@ -1,9 +1,13 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView
+from django.core.exceptions import PermissionDenied
 
+from .forms import DocumentFilterForm
 from .models import Category, NursingDocument, visible_documents_for
 
 
@@ -12,10 +16,30 @@ class DocumentListView(LoginRequiredMixin, ListView):
     template_name = "documents/list.html"
     context_object_name = "documents"
 
+    def _get_visible_categories(self):
+        visible_documents = visible_documents_for(self.request.user)
+        return Category.objects.filter(documents__in=visible_documents).distinct()
+
+    def get_filter_form(self):
+        if not hasattr(self, "_filter_form"):
+            self._filter_form = DocumentFilterForm(
+                self.request.GET or None,
+                valid_categories=self._get_visible_categories(),
+            )
+        return self._filter_form
+
     def get_queryset(self):
         queryset = visible_documents_for(self.request.user)
-        search_query = self.request.GET.get("q", "").strip()
-        category_slug = self.request.GET.get("category", "").strip()
+        form = self.get_filter_form()
+
+        if self.request.GET and not form.is_valid():
+            for field_errors in form.errors.values():
+                for err in field_errors:
+                    messages.error(self.request, err)
+            return queryset
+
+        search_query = form.cleaned_data.get("q", "") if form.is_bound else ""
+        category_slug = form.cleaned_data.get("category", "") if form.is_bound else ""
 
         if search_query:
             queryset = queryset.filter(
@@ -30,12 +54,19 @@ class DocumentListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        visible_documents = visible_documents_for(self.request.user)
-        context["categories"] = Category.objects.filter(
-            documents__in=visible_documents
-        ).distinct()
-        context["search_query"] = self.request.GET.get("q", "").strip()
-        context["selected_category"] = self.request.GET.get("category", "").strip()
+        form = self.get_filter_form()
+        context["categories"] = self._get_visible_categories()
+        context["filter_form"] = form
+        context["search_query"] = (
+            form.cleaned_data.get("q", "")
+            if form.is_bound and form.is_valid()
+            else self.request.GET.get("q", "").strip()
+        )
+        context["selected_category"] = (
+            form.cleaned_data.get("category", "")
+            if form.is_bound and form.is_valid()
+            else ""
+        )
         return context
 
 
@@ -62,9 +93,18 @@ class DocumentBookmarkView(LoginRequiredMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
+        # get_object_or_404 prevents the app from crashing if the ID is fake
         document = get_object_or_404(visible_documents_for(request.user), pk=pk)
-        if document.bookmarks.filter(pk=request.user.pk).exists():
-            document.bookmarks.remove(request.user)
-        else:
-            document.bookmarks.add(request.user)
+        
+        if not document.can_view(request.user):
+             raise PermissionDenied("You do not have permission to bookmark this document.")
+
+        with transaction.atomic():
+            if document.bookmarks.filter(pk=request.user.pk).exists():
+                document.bookmarks.remove(request.user)
+                messages.info(request, f'Removed "{document.title}" from your bookmarks.')
+            else:
+                document.bookmarks.add(request.user)
+                messages.success(request, f'Bookmarked "{document.title}".')
+                
         return redirect("documents:detail", pk=document.pk)

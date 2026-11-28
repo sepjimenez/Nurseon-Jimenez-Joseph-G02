@@ -1,6 +1,7 @@
 import re
 from django.conf import settings
-from django.db import models
+from django.core.validators import MinLengthValidator
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
@@ -48,7 +49,7 @@ class NursingDocument(models.Model):
         blank=True,
         help_text="Custom or system identifier (e.g. doc_01)",
     )
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, validators=[MinLengthValidator(3)])
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -62,7 +63,8 @@ class NursingDocument(models.Model):
         help_text="e.g. 12 mins (estimated)",
     )
     description = models.TextField(
-        help_text="Summary or overview of the nursing document"
+        help_text="Summary or overview of the nursing document",
+        validators=[MinLengthValidator(10)],
     )
     publish_date = models.DateField(default=timezone.now)
     is_published = models.BooleanField(
@@ -71,9 +73,12 @@ class NursingDocument(models.Model):
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="nursing_documents",
     )
+
     tags = models.ManyToManyField(Tag, blank=True, related_name="documents")
     bookmarks = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
@@ -90,16 +95,25 @@ class NursingDocument(models.Model):
         return f"{self.doc_id or self.pk}: {self.title}"
 
     def save(self, *args, **kwargs):
-        if not self.doc_id:
-            # Generate next doc_XX
-            last = NursingDocument.objects.filter(doc_id__startswith="doc_").order_by("-id").first()
-            if last and last.doc_id:
-                match = re.search(r"doc_(\d+)", last.doc_id)
-                next_num = int(match.group(1)) + 1 if match else 1
-            else:
-                next_num = 1
-            self.doc_id = f"doc_{next_num:02d}"
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if not self.doc_id:
+                last = (
+                    NursingDocument.objects.filter(doc_id__startswith="doc_")
+                    .order_by("-id")
+                    .first()
+                )
+                if last and last.doc_id:
+                    match = re.search(r"doc_(\d+)", last.doc_id)
+                    next_num = int(match.group(1)) + 1 if match else 1
+                else:
+                    next_num = 1
+
+                candidate = f"doc_{next_num:02d}"
+                while NursingDocument.objects.filter(doc_id=candidate).exists():
+                    next_num += 1
+                    candidate = f"doc_{next_num:02d}"
+                self.doc_id = candidate
+            super().save(*args, **kwargs)
 
     def can_view(self, user):
         """
@@ -114,9 +128,11 @@ class NursingDocument(models.Model):
             return True
         if self.created_by_id == user.pk:
             return True
-        # If created by admin/staff, visible to enrolled students
-        if self.created_by.is_admin_role() and self.is_published:
+        
+        # FIX: Check if created_by exists before checking the role
+        if self.created_by and self.created_by.is_admin_role() and self.is_published:
             return True
+            
         return False
 
     def can_modify(self, user):
@@ -127,6 +143,11 @@ class NursingDocument(models.Model):
             return False
         if user.is_admin_role():
             return True
+        
+        # If created_by is None (user was deleted), no standard student can modify it.
+        if self.created_by_id is None:
+            return False
+            
         return self.created_by_id == user.pk
 
 
