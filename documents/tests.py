@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from .models import Category, DocumentSection, DocumentSource, NursingDocument, Tag
@@ -199,3 +199,20 @@ class DocumentLibraryTests(TestCase):
         doc.refresh_from_db()
         self.assertIsNone(doc.created_by)
         self.assertEqual(NursingDocument.objects.filter(pk=doc.pk).count(), 1)
+
+    def test_cannot_bookmark_another_users_private_document(self):
+        self.client.force_login(self.student)
+        response = self.client.post(reverse("documents:bookmark", args=[self.private_document.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(self.private_document.bookmarks.filter(pk=self.student.pk).exists())
+
+    def test_bookmark_post_without_csrf_token_is_rejected(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.student)
+        response = client.post(reverse("documents:bookmark", args=[self.public_document.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_custom_404_page_is_used(self):
+        self.client.force_login(self.student)
+        response = self.client.get("/documents/999999/")
+        self.assertContains(response, "Page or document not found", status_code=404)
