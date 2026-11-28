@@ -1,4 +1,5 @@
-from django.urls import path, include
+from django.contrib.auth import views as auth_views
+from django.urls import path
 from .views import (
     AdminStudentDeleteView,
     AdminStudentUpdateView,
@@ -26,5 +27,6 @@ urlpatterns = [
     path('students/<int:user_id>/edit/', AdminStudentUpdateView.as_view(), name='admin_student_edit'),
     path('students/<int:user_id>/delete/', AdminStudentDeleteView.as_view(), name='admin_student_delete'),
 
-    path('', include('django.contrib.auth.urls')),
+    path('login/', auth_views.LoginView.as_view(redirect_authenticated_user=True), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
