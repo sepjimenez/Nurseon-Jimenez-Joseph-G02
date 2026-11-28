@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView
+from django.core.exceptions import PermissionDenied
 
 from .forms import DocumentFilterForm
 from .models import Category, NursingDocument, visible_documents_for
@@ -92,12 +93,18 @@ class DocumentBookmarkView(LoginRequiredMixin, View):
     http_method_names = ["post"]
 
     def post(self, request, pk):
+        # get_object_or_404 prevents the app from crashing if the ID is fake
+        document = get_object_or_404(visible_documents_for(request.user), pk=pk)
+        
+        if not document.can_view(request.user):
+             raise PermissionDenied("You do not have permission to bookmark this document.")
+
         with transaction.atomic():
-            document = get_object_or_404(visible_documents_for(request.user), pk=pk)
             if document.bookmarks.filter(pk=request.user.pk).exists():
                 document.bookmarks.remove(request.user)
                 messages.info(request, f'Removed "{document.title}" from your bookmarks.')
             else:
                 document.bookmarks.add(request.user)
                 messages.success(request, f'Bookmarked "{document.title}".')
+                
         return redirect("documents:detail", pk=document.pk)

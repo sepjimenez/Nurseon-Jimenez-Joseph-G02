@@ -85,8 +85,11 @@ AdminStudentUpdateView = AdminUserUpdateView
 class AdminUserPasswordView(AdminRoleRequiredMixin, View):
     template_name = 'dashboard/user_password_form.html'
 
+    def get_target(self, user_id):
+        return get_object_or_404(CustomUser, pk=user_id, role=CustomUser.Role.STUDENT)
+
     def get(self, request, user_id):
-        target_user = get_object_or_404(CustomUser, pk=user_id)
+        target_user = self.get_target(user_id)
         form = AdminSetUserPasswordForm(user=target_user)
         return render(request, self.template_name, {
             'form': form,
@@ -94,7 +97,7 @@ class AdminUserPasswordView(AdminRoleRequiredMixin, View):
         })
 
     def post(self, request, user_id):
-        target_user = get_object_or_404(CustomUser, pk=user_id)
+        target_user = self.get_target(user_id)
         form = AdminSetUserPasswordForm(request.POST, user=target_user)
         if form.is_valid():
             form.save()

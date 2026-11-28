@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import CustomUser
 
@@ -113,8 +114,13 @@ class AdminSetUserPasswordForm(forms.Form):
         cleaned_data = super().clean()
         p1 = cleaned_data.get("new_password")
         p2 = cleaned_data.get("confirm_password")
-        if p1 and p2 and p1 != p2:
-            raise forms.ValidationError("Passwords do not match.")
+        if p1 and p2:
+            if p1 != p2:
+                raise forms.ValidationError("Passwords do not match.")
+            try:
+                password_validation.validate_password(p1, self.user)
+            except forms.ValidationError as exc:
+                self.add_error("new_password", exc)
         return cleaned_data
 
     def save(self):

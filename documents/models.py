@@ -71,9 +71,12 @@ class NursingDocument(models.Model):
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="nursing_documents",
     )
+
     tags = models.ManyToManyField(Tag, blank=True, related_name="documents")
     bookmarks = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
@@ -123,9 +126,11 @@ class NursingDocument(models.Model):
             return True
         if self.created_by_id == user.pk:
             return True
-        # If created by admin/staff, visible to enrolled students
-        if self.created_by.is_admin_role() and self.is_published:
+        
+        # FIX: Check if created_by exists before checking the role
+        if self.created_by and self.created_by.is_admin_role() and self.is_published:
             return True
+            
         return False
 
     def can_modify(self, user):
@@ -136,6 +141,11 @@ class NursingDocument(models.Model):
             return False
         if user.is_admin_role():
             return True
+        
+        # If created_by is None (user was deleted), no standard student can modify it.
+        if self.created_by_id is None:
+            return False
+            
         return self.created_by_id == user.pk
 
 

@@ -34,11 +34,12 @@ class CustomUser(AbstractUser):
         return self.role == self.Role.ADMIN
 
     def save(self, *args, **kwargs):
-        if self.role == self.Role.ADMIN:
-            self.is_staff = True
-            self.is_superuser = True
-        elif self.role == self.Role.STUDENT and not self.is_superuser:
-            self.is_staff = False
+        is_admin = self.role == self.Role.ADMIN
+        self.is_staff = is_admin
+        self.is_superuser = is_admin
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = {*update_fields, "is_staff", "is_superuser"}
         super().save(*args, **kwargs)
 
     def can_be_deleted_by(self, user):
