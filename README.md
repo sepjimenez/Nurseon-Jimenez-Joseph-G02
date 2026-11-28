@@ -129,12 +129,13 @@ python -m pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a private `.env` file in the project root. Do not commit it. The application reads these variables:
+Copy `.env.example` to `.env` in the project root and fill in real values. Never commit `.env`. The application reads these variables:
 
 | Variable | Description |
 | --- | --- |
 | `SECRET_KEY` | Django secret key |
 | `DEBUG` | Debug mode; defaults to `False` |
+| `ALLOWED_HOSTS` | Optional comma-separated hostnames; defaults to `localhost,127.0.0.1` |
 | `DATABASE_URL` | PostgreSQL connection URL |
 | `ADMIN_EMAIL` | Email for the configured administrator account |
 | `ADMIN_PASSWORD` | Password for the configured administrator account |
@@ -168,7 +169,7 @@ The project synchronizes an administrator account from `ADMIN_EMAIL`, `ADMIN_PAS
 python manage.py setup_admin
 ```
 
-> **Warning:** The current automatic synchronization and setup command can delete other administrator-role accounts. Review `accounts/admin_setup.py` before using this with shared or production data, and keep a database backup.
+> **Warning:** `python manage.py setup_admin` deletes every other administrator-role account. The automatic sync on server start no longer deletes anything, but it does reset the configured administrator's password to `ADMIN_PASSWORD`. Keep a database backup before running `setup_admin` on shared or production data. Use `setup_admin` rather than `createsuperuser`: roles drive the staff/superuser flags, so `createsuperuser` would create a student.
 
 Administrators can create nursing documents, categories, tags, sections, and sources in `/admin/`. Publish a document there for it to appear in the student dashboard and library.
 
@@ -197,14 +198,17 @@ Run the Django test suite with:
 python manage.py test
 ```
 
-Use an isolated test database rather than a production database. Some existing tests may need updates to match the current routes and dashboard templates.
+No `.env` file or PostgreSQL database is needed to run the tests. When `test` is on the command line, the settings switch to an in-memory SQLite database and a throwaway secret key, and the automatic admin sync is skipped.
+
+The suite covers registration, login and role-based redirects, profile updates, administrator user management (including demotion and password resets), the document library (search, filters, visibility rules, bookmarks), CSRF enforcement, and the custom 404 page.
+
+To check the custom error pages manually, set `DEBUG=False` in `.env` and run `python manage.py runserver --insecure`, then open a URL that does not exist.
 
 ## Deployment Notes
 
-- `ALLOWED_HOSTS` currently includes only `localhost` and `127.0.0.1`. Add explicit deployment hostnames in `nurseon/settings.py`; do not use a wildcard.
-- Admin-role synchronization currently can remove other administrator accounts. Review this behavior before using it with shared or production data.
-- Demoting an administrator currently does not revoke Django's `is_staff` and `is_superuser` flags.
-- Keep `.env` and all credentials out of version control. Set `DEBUG` to `False` and use a unique `SECRET_KEY` in production.
+- `ALLOWED_HOSTS` defaults to `localhost` and `127.0.0.1`. Set the `ALLOWED_HOSTS` environment variable to your deployment hostnames; do not use a wildcard.
+- Demoting an administrator revokes `is_staff` and `is_superuser`; both flags always follow the `role` field.
+- Keep `.env` and all credentials out of version control. Set `DEBUG=False` and use a unique `SECRET_KEY` in production.
 
 ## Project Structure
 
