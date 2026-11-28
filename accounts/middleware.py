@@ -1,9 +1,9 @@
 import logging
 from .admin_setup import sync_admin_account
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 _ADMIN_SYNCED = False
-
 class AutoSyncAdminMiddleware:
     """
     Ensures the administrator account configured in .env (ADMIN_EMAIL, ADMIN_PASSWORD)
@@ -15,7 +15,7 @@ class AutoSyncAdminMiddleware:
 
     def __call__(self, request):
         global _ADMIN_SYNCED
-        if not _ADMIN_SYNCED:
+        if not _ADMIN_SYNCED and not getattr(settings, "TESTING", False):
             try:
                 success, msg = sync_admin_account(wipe_old_admins=True)
                 if success:
