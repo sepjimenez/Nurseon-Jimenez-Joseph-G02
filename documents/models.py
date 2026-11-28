@@ -1,5 +1,6 @@
 import re
 from django.conf import settings
+from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -48,7 +49,7 @@ class NursingDocument(models.Model):
         blank=True,
         help_text="Custom or system identifier (e.g. doc_01)",
     )
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, validators=[MinLengthValidator(3)])
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -62,7 +63,8 @@ class NursingDocument(models.Model):
         help_text="e.g. 12 mins (estimated)",
     )
     description = models.TextField(
-        help_text="Summary or overview of the nursing document"
+        help_text="Summary or overview of the nursing document",
+        validators=[MinLengthValidator(10)],
     )
     publish_date = models.DateField(default=timezone.now)
     is_published = models.BooleanField(

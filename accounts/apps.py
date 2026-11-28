@@ -7,6 +7,9 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         def _post_migrate_admin_sync(sender, **kwargs):
+            from django.conf import settings
+            if getattr(settings, "TESTING", False):
+                return
             from .admin_setup import sync_admin_account
             sync_admin_account(wipe_old_admins=False)
 
